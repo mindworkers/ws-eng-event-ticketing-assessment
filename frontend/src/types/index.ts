@@ -1,6 +1,6 @@
 export type UserRole = "ORGANIZER" | "ATTENDEE";
 export type EventStatus = "DRAFT" | "PUBLISHED" | "CANCELLED";
-export type BookingStatus = "CONFIRMED" | "CANCELLED" | "CHECKED_IN" | "WAITLISTED";
+export type BookingStatus = "CONFIRMED" | "CANCELLED" | "CHECKED_IN" | "WAITLISTED" | "TRANSFERRED";
 export type EventCategory = "MUSIC" | "SPORTS" | "CONFERENCE" | "WORKSHOP" | "COMEDY" | "OTHER";
 export type RefundPolicy = "FULL_REFUND" | "TIERED" | "NO_REFUND";
 

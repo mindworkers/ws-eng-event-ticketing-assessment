@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Booking } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { bookingsAPI } from "@/lib/api";
+import { bookingsAPI, transfersAPI } from "@/lib/api";
 import { formatDate, formatTime, formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Alert } from "@/components/ui/Alert";
+import { Input } from "@/components/ui/Input";
 
 export default function TicketPage() {
   const params = useParams();
@@ -20,6 +21,11 @@ export default function TicketPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [transferError, setTransferError] = useState("");
+  const [transferSuccess, setTransferSuccess] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -54,6 +60,31 @@ export default function TicketPage() {
         <Alert variant="warning">This ticket is no longer valid. Status: {booking.status}</Alert>
       </div>
     );
+  }
+
+  async function handleTransfer() {
+    if (!token || !booking) return;
+
+    setTransferError("");
+    setTransferSuccess("");
+    setIsTransferring(true);
+
+    try {
+      await transfersAPI.create(token, {
+        bookingId: booking.id,
+        recipientEmail: recipientEmail.trim(),
+      });
+      setTransferSuccess("Ticket transferred successfully. This ticket is no longer available in your bookings.");
+
+      // After a successful transfer, the original booking should become inaccessible.
+      // Send the user back to bookings list.
+      setTimeout(() => router.push("/bookings"), 800);
+    } catch (err: unknown) {
+      const e = err as Error;
+      setTransferError(e.message || "Failed to transfer ticket");
+    } finally {
+      setIsTransferring(false);
+    }
   }
 
   return (
@@ -108,6 +139,28 @@ export default function TicketPage() {
             </div>
 
             <div className="pt-4 space-y-3">
+              <div className="text-left space-y-2">
+                <h2 className="text-sm font-semibold text-gray-900">Transfer Ticket</h2>
+                <Input
+                  label="Recipient email"
+                  type="email"
+                  placeholder="bob@example.com"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  disabled={isTransferring}
+                />
+                {transferError && <Alert variant="error">{transferError}</Alert>}
+                {transferSuccess && <Alert variant="success">{transferSuccess}</Alert>}
+                <Button
+                  className="w-full"
+                  variant="secondary"
+                  onClick={handleTransfer}
+                  disabled={!recipientEmail.trim() || isTransferring}
+                >
+                  {isTransferring ? "Transferring..." : "Transfer Ticket"}
+                </Button>
+              </div>
+
               <Button className="w-full" onClick={() => qrCode && window.open(qrCode, "_blank")}>
                 Download QR Code
               </Button>

@@ -67,25 +67,12 @@ router.post("/", authenticateApiKey, async (req, res) => {
       });
     }
 
-    // Check if booking is cancelled
-    if (booking.status === "CANCELLED") {
+    // Only confirmed tickets can be checked in
+    if (booking.status !== "CONFIRMED") {
       return res.status(400).json({
         success: false,
-        error: "TICKET_CANCELLED",
-        message: "This ticket has been cancelled",
-      });
-    }
-
-    // Check if already checked in
-    if (booking.status === "CHECKED_IN") {
-      return res.status(409).json({
-        success: false,
-        error: "ALREADY_CHECKED_IN",
-        message: `Ticket already used at ${booking.checkedInAt?.toISOString()}`,
-        data: {
-          checkedInAt: booking.checkedInAt,
-          attendeeName: booking.user.name,
-        },
+        error: "INVALID_TICKET",
+        message: "This ticket is not valid",
       });
     }
 

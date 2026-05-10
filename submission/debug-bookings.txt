@@ -1,0 +1,249 @@
+LOGIN_JSON:
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "cmoywdr8a0002ap05n2xs91h2",
+      "email": "alice@example.com",
+      "name": "Alice Williams",
+      "role": "ATTENDEE",
+      "isVerified": true
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW95d2RyOGEwMDAyYXAwNW4yeHM5MWgyIiwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsInJvbGUiOiJBVFRFTkRFRSIsImlhdCI6MTc3ODM2NzQ1NiwiZXhwIjoxNzc4OTcyMjU2fQ.wcXnaNvduWH3fQKc6IxGzbh6YCt9wfAlzf-RVgNMuc0"
+  },
+  "message": "Login successful"
+}
+BOOKINGS_JSON:
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cmoywdrvn002map05lrnvjiy8",
+      "ticketCode": "a65aafef578d2f62e7ba9e64e86510e3",
+      "qrCodeData": "{\"code\":\"a65aafef578d2f62e7ba9e64e86510e3\",\"ts\":1778364626530}",
+      "status": "CONFIRMED",
+      "pricePaid": 250,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.531Z",
+      "updatedAt": "2026-05-09T22:10:26.531Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdrbs000qap05lo47h27h",
+      "seatTierId": null,
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdrbs000qap05lo47h27h",
+        "name": "Exclusive Chef's Table Dinner",
+        "date": "2026-06-05T00:00:00.000Z",
+        "time": "19:30",
+        "venue": "Rossi's Private Kitchen, Portland",
+        "imageUrl": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800",
+        "status": "PUBLISHED",
+        "category": "OTHER"
+      },
+      "seatTier": null
+    },
+    {
+      "id": "cmoywdrlm001wap05qnsf8dtj",
+      "ticketCode": "0fd4d2716f830482a476936f2c4da399",
+      "qrCodeData": "{\"code\":\"0fd4d2716f830482a476936f2c4da399\",\"ts\":1778364626165}",
+      "status": "CONFIRMED",
+      "pricePaid": 75,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.170Z",
+      "updatedAt": "2026-05-09T22:10:26.170Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdray000gap05m3gxlzz8",
+      "seatTierId": "cmoywdrcf000yap0587aehj6j",
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdray000gap05m3gxlzz8",
+        "name": "EDM Beach Party",
+        "date": "2026-08-01T00:00:00.000Z",
+        "time": "21:00",
+        "venue": "Miami Beach, South Beach Area",
+        "imageUrl": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800",
+        "status": "PUBLISHED",
+        "category": "MUSIC"
+      },
+      "seatTier": {
+        "id": "cmoywdrcf000yap0587aehj6j",
+        "name": "General Admission",
+        "price": 75
+      }
+    },
+    {
+      "id": "cmoywdrkp001uap05m7gnunq1",
+      "ticketCode": "0175eb0190541f834e25e8e8cbcc8090",
+      "qrCodeData": "{\"code\":\"0175eb0190541f834e25e8e8cbcc8090\",\"ts\":1778364626137}",
+      "status": "CONFIRMED",
+      "pricePaid": 120,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.138Z",
+      "updatedAt": "2026-05-09T22:10:26.138Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdraq000eap05wwl2fybi",
+      "seatTierId": null,
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdraq000eap05wwl2fybi",
+        "name": "Photography Workshop for Beginners",
+        "date": "2026-06-12T00:00:00.000Z",
+        "time": "10:00",
+        "venue": "Art Studio Downtown, Seattle",
+        "imageUrl": "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800",
+        "status": "PUBLISHED",
+        "category": "WORKSHOP"
+      },
+      "seatTier": null
+    },
+    {
+      "id": "cmoywdrjp001sap05wbza2j9y",
+      "ticketCode": "16199a29dd1071ed590d882e8372f2e0",
+      "qrCodeData": "{\"code\":\"16199a29dd1071ed590d882e8372f2e0\",\"ts\":1778364626100}",
+      "status": "CONFIRMED",
+      "pricePaid": 50,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.101Z",
+      "updatedAt": "2026-05-09T22:10:26.101Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdrac000cap05d8c7ln16",
+      "seatTierId": null,
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdrac000cap05d8c7ln16",
+        "name": "Startup Pitch Competition",
+        "date": "2026-05-05T00:00:00.000Z",
+        "time": "14:00",
+        "venue": "Innovation Center, Austin",
+        "imageUrl": "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800",
+        "status": "PUBLISHED",
+        "category": "CONFERENCE"
+      },
+      "seatTier": null
+    },
+    {
+      "id": "cmoywdrii001qap05uo982t6m",
+      "ticketCode": "4be3c4e7bf7c7378d9260bf5b607ee98",
+      "qrCodeData": "{\"code\":\"4be3c4e7bf7c7378d9260bf5b607ee98\",\"ts\":1778364626058}",
+      "status": "CONFIRMED",
+      "pricePaid": 85,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.059Z",
+      "updatedAt": "2026-05-09T22:10:26.059Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdr9u000aap05vgfmzgb5",
+      "seatTierId": null,
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdr9u000aap05vgfmzgb5",
+        "name": "Jazz Night Under the Stars",
+        "date": "2026-04-10T00:00:00.000Z",
+        "time": "20:00",
+        "venue": "Botanical Gardens, Chicago",
+        "imageUrl": "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800",
+        "status": "PUBLISHED",
+        "category": "MUSIC"
+      },
+      "seatTier": null
+    },
+    {
+      "id": "cmoywdrhv001oap05cvv3yo9l",
+      "ticketCode": "8fd62900b8f6f62a17535035c972147d",
+      "qrCodeData": "{\"code\":\"8fd62900b8f6f62a17535035c972147d\",\"ts\":1778364626034}",
+      "status": "CONFIRMED",
+      "pricePaid": 299,
+      "discountAmount": 0,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:26.035Z",
+      "updatedAt": "2026-05-09T22:10:26.035Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdr9k0008ap05pfits0gh",
+      "seatTierId": null,
+      "promoCodeId": null,
+      "event": {
+        "id": "cmoywdr9k0008ap05pfits0gh",
+        "name": "JavaScript Mastery Workshop",
+        "date": "2026-03-20T00:00:00.000Z",
+        "time": "09:00",
+        "venue": "Tech Hub Conference Center, San Francisco",
+        "imageUrl": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+        "status": "PUBLISHED",
+        "category": "WORKSHOP"
+      },
+      "seatTier": null
+    },
+    {
+      "id": "cmoywdrg3001map056fyj4tsk",
+      "ticketCode": "9b725134c7d262b42739accc0a7e7892",
+      "qrCodeData": "{\"code\":\"9b725134c7d262b42739accc0a7e7892\",\"ts\":1778364625965}",
+      "status": "CONFIRMED",
+      "pricePaid": 85,
+      "discountAmount": 15,
+      "refundAmount": 0,
+      "cancelledAt": null,
+      "checkedInAt": null,
+      "transferredAt": null,
+      "createdAt": "2026-05-09T22:10:25.972Z",
+      "updatedAt": "2026-05-09T22:10:25.972Z",
+      "userId": "cmoywdr8a0002ap05n2xs91h2",
+      "eventId": "cmoywdr9b0006ap05k0s29o4a",
+      "seatTierId": "cmoywdrc4000uap05wnlkuu5i",
+      "promoCodeId": "cmoywdrea001cap057craesmy",
+      "event": {
+        "id": "cmoywdr9b0006ap05k0s29o4a",
+        "name": "Summer Rock Festival 2026",
+        "date": "2026-07-15T00:00:00.000Z",
+        "time": "18:00",
+        "venue": "Central Park Amphitheater, New York",
+        "imageUrl": "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800",
+        "status": "PUBLISHED",
+        "category": "MUSIC"
+      },
+      "seatTier": {
+        "id": "cmoywdrc4000uap05wnlkuu5i",
+        "name": "Gold",
+        "price": 100
+      }
+    }
+  ]
+}
+undefined:1
+undefined
+^
+
+SyntaxError: "undefined" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at [stdin]:1:16
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:118:14
+    at [stdin]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_stdin:32:5
+    at Socket.<anonymous> (node:internal/process/execution:234:5)
+    at Socket.emit (node:events:531:35)
+
+Node.js v20.18.0

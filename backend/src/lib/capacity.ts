@@ -8,11 +8,14 @@
  * Handles both event-level and tier-level sold counts.
  */
 export async function decrementCapacity(tx: any, booking: any) {
+  // Always decrement event-level soldCount.
+  // Tier soldCount is decremented only when a seatTierId is present.
+  await tx.event.update({
+    where: { id: booking.eventId },
+    data: { soldCount: { decrement: 1 } },
+  });
+
   if (booking.seatTierId) {
-    await tx.event.update({
-      where: { id: booking.eventId },
-      data: { soldCount: { decrement: 1 } },
-    });
     await tx.seatTier.update({
       where: { id: booking.seatTierId },
       data: { soldCount: { decrement: 1 } },
@@ -24,11 +27,7 @@ export async function decrementCapacity(tx: any, booking: any) {
  * Increment capacity counts when a new booking is created.
  * Handles both event-level and tier-level sold counts.
  */
-export async function incrementCapacity(
-  tx: any,
-  eventId: string,
-  seatTierId?: string | null
-) {
+export async function incrementCapacity(tx: any, eventId: string, seatTierId?: string | null) {
   await tx.event.update({
     where: { id: eventId },
     data: { soldCount: { increment: 1 } },

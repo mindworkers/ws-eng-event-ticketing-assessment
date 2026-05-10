@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Event, SeatTier } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { eventsAPI, bookingsAPI, promoCodesAPI } from "@/lib/api";
+import { eventsAPI, bookingsAPI, promoCodesAPI, waitlistAPI } from "@/lib/api";
 import { formatDate, formatTime, formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -19,12 +19,20 @@ export default function EventPage() {
   const router = useRouter();
   const { user, token } = useAuth();
 
+  const eventId = Array.isArray(params.id) ? params.id[0] : (params.id as string);
+
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState("");
+
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
+  const [isLeavingWaitlist, setIsLeavingWaitlist] = useState(false);
+  const [waitlistMessage, setWaitlistMessage] = useState("");
+  const [waitlistError, setWaitlistError] = useState("");
   const [selectedTier, setSelectedTier] = useState<SeatTier | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState<{ type: string; value: number } | null>(null);
@@ -33,11 +41,63 @@ export default function EventPage() {
 
   useEffect(() => {
     eventsAPI
-      .get(params.id as string)
+      .get(eventId)
       .then((res) => setEvent(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setIsLoading(false));
-  }, [params.id]);
+  }, [eventId]);
+
+  // If user is logged in, check if they're on the waitlist for this event.
+  useEffect(() => {
+    if (!user || !token) {
+      setWaitlistPosition(null);
+      return;
+    }
+
+    // Only relevant when sold out; but fetching even when not sold out is harmless.
+    waitlistAPI
+      .position(token, eventId)
+      .then((res) => {
+        setWaitlistPosition(res.data.position);
+      })
+      .catch(() => {
+        setWaitlistPosition(null);
+      });
+  }, [user, token, eventId]);
+
+  const handleJoinWaitlist = async () => {
+    if (!token || !user) return;
+    setIsJoiningWaitlist(true);
+    setWaitlistError("");
+    setWaitlistMessage("");
+
+    try {
+      const res = await waitlistAPI.join(token, { eventId });
+      setWaitlistPosition(res.data.position);
+      setWaitlistMessage(res.message || `Added to waitlist. Your position is ${res.data.position}.`);
+    } catch (err) {
+      setWaitlistError(err instanceof Error ? err.message : "Failed to join waitlist");
+    } finally {
+      setIsJoiningWaitlist(false);
+    }
+  };
+
+  const handleLeaveWaitlist = async () => {
+    if (!token || !user) return;
+    setIsLeavingWaitlist(true);
+    setWaitlistError("");
+    setWaitlistMessage("");
+
+    try {
+      const res = await waitlistAPI.leave(token, { eventId });
+      setWaitlistPosition(null);
+      setWaitlistMessage(res.message || "Removed from waitlist");
+    } catch (err) {
+      setWaitlistError(err instanceof Error ? err.message : "Failed to leave waitlist");
+    } finally {
+      setIsLeavingWaitlist(false);
+    }
+  };
 
   const handlePurchase = () => {
     if (!user) {
@@ -58,7 +118,7 @@ export default function EventPage() {
     setPromoDiscount(null);
 
     try {
-      const res = await promoCodesAPI.validate(token, params.id as string, promoCode.trim());
+      const res = await promoCodesAPI.validate(token, eventId, promoCode.trim());
       setPromoDiscount({ type: res.data.discountType, value: res.data.discountValue });
     } catch (err) {
       setPromoError(err instanceof Error ? err.message : "Invalid promo code");
@@ -74,7 +134,7 @@ export default function EventPage() {
 
     try {
       const res = await bookingsAPI.create(token, {
-        eventId: params.id as string,
+        eventId,
         seatTierId: selectedTier?.id,
         promoCode: promoDiscount ? promoCode.trim() : undefined,
       });
@@ -87,7 +147,7 @@ export default function EventPage() {
   };
 
   const getDisplayPrice = () => {
-    const basePrice = selectedTier ? selectedTier.price : (event?.price || 0);
+    const basePrice = selectedTier ? selectedTier.price : event?.price || 0;
     if (!promoDiscount) return basePrice;
     if (promoDiscount.type === "PERCENTAGE") {
       return basePrice * (1 - promoDiscount.value / 100);
@@ -96,7 +156,11 @@ export default function EventPage() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Spinner size="lg" /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   if (error || !event) {
@@ -121,13 +185,20 @@ export default function EventPage() {
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <svg className="h-20 w-20 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
             )}
             {isCancelled && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <Badge variant="danger" className="text-xl px-6 py-3">Event Cancelled</Badge>
+                <Badge variant="danger" className="text-xl px-6 py-3">
+                  Event Cancelled
+                </Badge>
               </div>
             )}
           </div>
@@ -162,8 +233,11 @@ export default function EventPage() {
                         key={tier.id}
                         onClick={() => !tierSoldOut && !isDisabled && setSelectedTier(tier)}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                          tierSoldOut ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed" :
-                          isSelected ? "border-sky-500 bg-sky-50" : "border-gray-200 hover:border-sky-300"
+                          tierSoldOut
+                            ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                            : isSelected
+                              ? "border-sky-500 bg-sky-50"
+                              : "border-gray-200 hover:border-sky-300"
                         }`}
                       >
                         <div className="flex justify-between items-center">
@@ -175,7 +249,11 @@ export default function EventPage() {
                           </div>
                           <div className="text-right">
                             <p className="text-xl font-bold text-sky-600">{formatCurrency(tier.price)}</p>
-                            {tierSoldOut && <Badge variant="danger" className="text-xs">Sold Out</Badge>}
+                            {tierSoldOut && (
+                              <Badge variant="danger" className="text-xs">
+                                Sold Out
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -192,7 +270,12 @@ export default function EventPage() {
             <CardContent className="space-y-4">
               <div className="flex items-start space-x-3">
                 <svg className="h-6 w-6 text-sky-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 <div>
                   <p className="font-medium text-gray-900">{formatDate(event.date)}</p>
@@ -202,8 +285,18 @@ export default function EventPage() {
 
               <div className="flex items-start space-x-3">
                 <svg className="h-6 w-6 text-sky-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
                 <p className="font-medium text-gray-900">{event.venue}</p>
               </div>
@@ -220,7 +313,9 @@ export default function EventPage() {
                           <p className="text-lg text-gray-400 line-through">{formatCurrency(selectedTier.price)}</p>
                           <p className="text-3xl font-bold text-green-600">{formatCurrency(getDisplayPrice())}</p>
                           <p className="text-sm text-green-600">
-                            {promoDiscount.type === "PERCENTAGE" ? `${promoDiscount.value}% off` : `${formatCurrency(promoDiscount.value)} off`}
+                            {promoDiscount.type === "PERCENTAGE"
+                              ? `${promoDiscount.value}% off`
+                              : `${formatCurrency(promoDiscount.value)} off`}
                           </p>
                         </div>
                       ) : (
@@ -237,7 +332,9 @@ export default function EventPage() {
                         <p className="text-lg text-gray-400 line-through">{formatCurrency(event.price)}</p>
                         <p className="text-3xl font-bold text-green-600">{formatCurrency(getDisplayPrice())}</p>
                         <p className="text-sm text-green-600">
-                          {promoDiscount.type === "PERCENTAGE" ? `${promoDiscount.value}% off` : `${formatCurrency(promoDiscount.value)} off`}
+                          {promoDiscount.type === "PERCENTAGE"
+                            ? `${promoDiscount.value}% off`
+                            : `${formatCurrency(promoDiscount.value)} off`}
                         </p>
                       </div>
                     ) : (
@@ -256,10 +353,20 @@ export default function EventPage() {
                     <Input
                       placeholder="Promo code"
                       value={promoCode}
-                      onChange={(e) => { setPromoCode(e.target.value); setPromoError(""); setPromoDiscount(null); }}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        setPromoError("");
+                        setPromoDiscount(null);
+                      }}
                       className="flex-1"
                     />
-                    <Button size="sm" variant="secondary" onClick={handleApplyPromo} isLoading={isValidatingPromo} disabled={!promoCode.trim()}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleApplyPromo}
+                      isLoading={isValidatingPromo}
+                      disabled={!promoCode.trim()}
+                    >
                       Apply
                     </Button>
                   </div>
@@ -270,9 +377,49 @@ export default function EventPage() {
 
               {purchaseError && <Alert variant="error">{purchaseError}</Alert>}
 
-              <Button className="w-full" size="lg" disabled={isDisabled} onClick={handlePurchase}>
-                {isCancelled ? "Event Cancelled" : isSoldOut ? "Sold Out" : isPastEvent ? "Event Ended" : "Buy Ticket"}
-              </Button>
+              {waitlistError && <Alert variant="error">{waitlistError}</Alert>}
+              {waitlistMessage && <Alert variant="success">{waitlistMessage}</Alert>}
+
+              {isSoldOut && !isCancelled && !isPastEvent ? (
+                waitlistPosition ? (
+                  <div className="space-y-2">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600">You are on the waitlist</p>
+                      <p className="text-lg font-semibold text-gray-900">Position: #{waitlistPosition}</p>
+                    </div>
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      variant="secondary"
+                      disabled={isLeavingWaitlist}
+                      isLoading={isLeavingWaitlist}
+                      onClick={handleLeaveWaitlist}
+                    >
+                      Leave Waitlist
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={!user || isJoiningWaitlist}
+                    isLoading={isJoiningWaitlist}
+                    onClick={handleJoinWaitlist}
+                  >
+                    Join Waitlist
+                  </Button>
+                )
+              ) : (
+                <Button className="w-full" size="lg" disabled={isDisabled} onClick={handlePurchase}>
+                  {isCancelled
+                    ? "Event Cancelled"
+                    : isSoldOut
+                      ? "Sold Out"
+                      : isPastEvent
+                        ? "Event Ended"
+                        : "Buy Ticket"}
+                </Button>
+              )}
 
               {isPastEvent && !isCancelled && <p className="text-center text-sm text-gray-500">This event has ended</p>}
             </CardContent>
@@ -298,7 +445,12 @@ export default function EventPage() {
               <>
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>-{promoDiscount.type === "PERCENTAGE" ? `${promoDiscount.value}%` : formatCurrency(promoDiscount.value)}</span>
+                  <span>
+                    -
+                    {promoDiscount.type === "PERCENTAGE"
+                      ? `${promoDiscount.value}%`
+                      : formatCurrency(promoDiscount.value)}
+                  </span>
                 </div>
                 <hr />
                 <div className="flex justify-between font-bold text-lg">
@@ -310,8 +462,12 @@ export default function EventPage() {
           </div>
           <p className="text-gray-600 text-sm">This is a mock payment - no actual charge will be made.</p>
           <div className="flex space-x-3">
-            <Button variant="secondary" className="flex-1" onClick={() => setShowModal(false)} disabled={isPurchasing}>Cancel</Button>
-            <Button className="flex-1" onClick={confirmPurchase} isLoading={isPurchasing}>Confirm Purchase</Button>
+            <Button variant="secondary" className="flex-1" onClick={() => setShowModal(false)} disabled={isPurchasing}>
+              Cancel
+            </Button>
+            <Button className="flex-1" onClick={confirmPurchase} isLoading={isPurchasing}>
+              Confirm Purchase
+            </Button>
           </div>
         </div>
       </Modal>

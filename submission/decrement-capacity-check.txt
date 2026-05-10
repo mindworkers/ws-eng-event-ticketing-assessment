@@ -1,0 +1,4 @@
+== decrementCapacity GA cancellation check ==
+Timestamp: 2026-05-09T22:59:00Z
+
+Checking prerequisites...

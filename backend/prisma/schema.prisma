@@ -44,7 +44,7 @@ model Event {
   updatedAt         DateTime @updatedAt
 
   organizerId String
-  organizer   User       @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  organizer   User        @relation("OrganizerEvents", fields: [organizerId], references: [id])
   bookings    Booking[]
   seatTiers   SeatTier[]
   promoCodes  PromoCode[]
@@ -71,19 +71,19 @@ model SeatTier {
 }
 
 model PromoCode {
-  id               String    @id @default(cuid())
-  code             String
-  discountType     String    // PERCENTAGE or FIXED
-  discountValue    Float
-  usageLimit       Int?      // null = unlimited
-  usageCount       Int       @default(0)
-  isActive         Boolean   @default(true)
-  validFrom        DateTime? // null = immediately valid
-  validUntil       DateTime? // null = never expires
-  minPurchaseAmount Float?   // null = no minimum
-  maxDiscountAmount Float?   // null = no cap (for percentage codes)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  code              String
+  discountType      String // PERCENTAGE or FIXED
+  discountValue     Float
+  usageLimit        Int? // null = unlimited
+  usageCount        Int       @default(0)
+  isActive          Boolean   @default(true)
+  validFrom         DateTime? // null = immediately valid
+  validUntil        DateTime? // null = never expires
+  minPurchaseAmount Float? // null = no minimum
+  maxDiscountAmount Float? // null = no cap (for percentage codes)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   eventId  String
   event    Event     @relation(fields: [eventId], references: [id])
@@ -97,12 +97,13 @@ model Booking {
   id             String    @id @default(cuid())
   ticketCode     String    @unique @default(cuid())
   qrCodeData     String    @unique
-  status         String    @default("CONFIRMED") // CONFIRMED, CANCELLED, CHECKED_IN, WAITLISTED
+  status         String    @default("CONFIRMED") // CONFIRMED, CANCELLED, CHECKED_IN, WAITLISTED, TRANSFERRED
   pricePaid      Float     @default(0)
   discountAmount Float     @default(0)
   refundAmount   Float     @default(0)
   cancelledAt    DateTime?
   checkedInAt    DateTime?
+  transferredAt  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

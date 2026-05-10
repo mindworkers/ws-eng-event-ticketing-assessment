@@ -75,9 +75,7 @@ export default function HomePage() {
             onClick={() => setSelectedCategory(cat.value)}
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-              selectedCategory === cat.value
-                ? "bg-sky-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              selectedCategory === cat.value ? "bg-sky-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200",
             )}
           >
             {cat.label}
@@ -87,7 +85,9 @@ export default function HomePage() {
 
       <section>
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-          {selectedCategory ? `${CATEGORIES.find((c) => c.value === selectedCategory)?.label} Events` : "Upcoming Events"}
+          {selectedCategory
+            ? `${CATEGORIES.find((c) => c.value === selectedCategory)?.label} Events`
+            : "Upcoming Events"}
         </h2>
 
         {isLoading ? (
@@ -97,7 +97,12 @@ export default function HomePage() {
         ) : events.length === 0 ? (
           <div className="text-center py-12">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             <h3 className="mt-4 text-lg font-medium text-gray-900">No events found</h3>
             <p className="mt-2 text-gray-500">
@@ -118,14 +123,21 @@ export default function HomePage() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
                         </svg>
                       </div>
                     )}
                     <div className="absolute top-2 left-2">{categoryBadge(event.category)}</div>
                     {isSoldOut && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="danger" className="text-lg px-4 py-2">Sold Out</Badge>
+                        <Badge variant="danger" className="text-lg px-4 py-2">
+                          Sold Out
+                        </Badge>
                       </div>
                     )}
                   </div>
@@ -139,14 +151,31 @@ export default function HomePage() {
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex items-center space-x-2">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
                         </svg>
-                        <span>{formatDate(event.date)} at {formatTime(event.time)}</span>
+                        <span>
+                          {formatDate(event.date)} at {formatTime(event.time)}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
                         </svg>
                         <span className="line-clamp-1">{event.venue}</span>
                       </div>
@@ -158,7 +187,7 @@ export default function HomePage() {
                         {!isSoldOut && <span className="text-sm text-gray-500 ml-2">{remainingTickets} left</span>}
                       </div>
                       <Link href={`/events/${event.id}`}>
-                        <Button size="sm" disabled={isSoldOut}>{isSoldOut ? "Sold Out" : "Get Tickets"}</Button>
+                        <Button size="sm">Get Tickets</Button>
                       </Link>
                     </div>
                   </CardContent>

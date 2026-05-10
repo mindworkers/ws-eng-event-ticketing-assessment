@@ -48,16 +48,26 @@ export const updateTierSchema = createTierSchema.partial();
 // Promo Code schemas
 export const createPromoCodeSchema = z.object({
   code: z.string().min(1, "Code is required").max(20, "Code must be 20 characters or less"),
-  discountType: z.enum(["PERCENTAGE", "FIXED"], { errorMap: () => ({ message: "Discount type must be PERCENTAGE or FIXED" }) }),
+  discountType: z.enum(["PERCENTAGE", "FIXED"], {
+    errorMap: () => ({ message: "Discount type must be PERCENTAGE or FIXED" }),
+  }),
   discountValue: z.number().positive("Discount value must be positive"),
   usageLimit: z.number().int().positive("Usage limit must be positive").optional(),
-  validFrom: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date").optional().nullable(),
-  validUntil: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date").optional().nullable(),
+  validFrom: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date")
+    .optional()
+    .nullable(),
+  validUntil: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid date")
+    .optional()
+    .nullable(),
   minPurchaseAmount: z.number().min(0).optional().nullable(),
   maxDiscountAmount: z.number().min(0).optional().nullable(),
 });
 
-export const BOOKING_STATUSES = ["CONFIRMED", "CANCELLED", "CHECKED_IN", "WAITLISTED"] as const;
+export const BOOKING_STATUSES = ["CONFIRMED", "CANCELLED", "CHECKED_IN", "WAITLISTED", "TRANSFERRED"] as const;
 
 // Booking schemas
 export const createBookingSchema = z.object({
@@ -68,6 +78,12 @@ export const createBookingSchema = z.object({
 
 // Reassignment schema (organizer)
 export const reassignBookingSchema = z.object({
+  recipientEmail: z.string().email("Invalid email address"),
+});
+
+// Attendee ticket transfer schema
+export const transferBookingSchema = z.object({
+  bookingId: z.string().min(1, "Booking ID is required"),
   recipientEmail: z.string().email("Invalid email address"),
 });
 
@@ -87,4 +103,5 @@ export type UpdateTierInput = z.infer<typeof updateTierSchema>;
 export type CreatePromoCodeInput = z.infer<typeof createPromoCodeSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type ReassignBookingInput = z.infer<typeof reassignBookingSchema>;
+export type TransferBookingInput = z.infer<typeof transferBookingSchema>;
 export type CheckinInput = z.infer<typeof checkinSchema>;

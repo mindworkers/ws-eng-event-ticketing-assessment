@@ -19,6 +19,7 @@ router.get("/", authenticate, async (req, res) => {
     const bookings = await prisma.booking.findMany({
       where: {
         userId: req.user!.userId,
+        status: { not: "TRANSFERRED" },
       },
       include: {
         event: {
@@ -109,6 +110,14 @@ router.get("/:id", authenticate, async (req, res) => {
         success: false,
         error: "FORBIDDEN",
         message: "You can only view your own bookings",
+      });
+    }
+
+    if (booking.status === "TRANSFERRED") {
+      return res.status(404).json({
+        success: false,
+        error: "NOT_FOUND",
+        message: "Booking not found",
       });
     }
 
@@ -494,6 +503,39 @@ router.delete("/:id", authenticate, async (req, res) => {
 
       // Decrement capacity using centralized helper
       await decrementCapacity(tx, booking);
+
+      // Auto-promote the next waitlisted attendee, if any.
+      // This is intentionally performed in the same transaction as the cancellation
+      // to avoid race conditions (double promotion) when multiple cancellations happen.
+      const nextWaitlisted = await tx.booking.findFirst({
+        where: {
+          eventId: booking.eventId,
+          status: "WAITLISTED",
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (nextWaitlisted) {
+        const newTicketCode = generateTicketCode();
+        const newQrCodeData = generateQRData(newTicketCode);
+
+        await tx.booking.update({
+          where: { id: nextWaitlisted.id },
+          data: {
+            status: "CONFIRMED",
+            ticketCode: newTicketCode,
+            qrCodeData: newQrCodeData,
+            // Ensure waitlisted entries never retain any cancellation/checkin timestamps
+            cancelledAt: null,
+            checkedInAt: null,
+            refundAmount: 0,
+          },
+        });
+
+        // Promotion consumes the newly freed capacity.
+        // NOTE: Waitlist is event-level (not tier-specific), so this is always GA.
+        await incrementCapacity(tx, booking.eventId, null);
+      }
 
       // Restore promo code usage if one was applied
       if (booking.promoCodeId) {

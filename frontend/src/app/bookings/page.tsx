@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Booking, RefundBreakdown } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { bookingsAPI } from "@/lib/api";
+import { waitlistAPI } from "@/lib/api";
 import { formatDate, formatTime, formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -26,6 +27,7 @@ export default function BookingsPage() {
   const [refundPreview, setRefundPreview] = useState<RefundBreakdown | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [cancelSuccess, setCancelSuccess] = useState("");
+  const [waitlistPositionsByEventId, setWaitlistPositionsByEventId] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (authLoading) return;
@@ -36,7 +38,33 @@ export default function BookingsPage() {
 
     bookingsAPI
       .list(token)
-      .then((res) => setBookings(res.data))
+      .then(async (res) => {
+        setBookings(res.data);
+
+        // Fetch waitlist positions for WAITLISTED bookings.
+        const waitlisted = res.data.filter((b) => b.status === "WAITLISTED" && b.event?.id);
+        if (waitlisted.length === 0) {
+          setWaitlistPositionsByEventId({});
+          return;
+        }
+
+        const entries = await Promise.all(
+          waitlisted.map(async (b) => {
+            try {
+              const posRes = await waitlistAPI.position(token, b.event!.id);
+              return [b.event!.id, posRes.data.position] as const;
+            } catch {
+              return [b.event!.id, -1] as const;
+            }
+          }),
+        );
+
+        const map: Record<string, number> = {};
+        for (const [eventId, pos] of entries) {
+          if (pos > 0) map[eventId] = pos;
+        }
+        setWaitlistPositionsByEventId(map);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setIsLoading(false));
   }, [user, token, authLoading, router]);
@@ -65,7 +93,7 @@ export default function BookingsPage() {
       setCancelSuccess(
         res.data.refundAmount > 0
           ? `Booking cancelled. Refund of ${formatCurrency(res.data.refundAmount)} will be processed.`
-          : "Booking cancelled successfully."
+          : "Booking cancelled successfully.",
       );
       setCancelId(null);
     } catch (err) {
@@ -76,15 +104,25 @@ export default function BookingsPage() {
   };
 
   if (authLoading || isLoading) {
-    return <div className="flex items-center justify-center min-h-[50vh]"><Spinner size="lg" /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case "CONFIRMED": return <Badge variant="success">Confirmed</Badge>;
-      case "CHECKED_IN": return <Badge variant="info">Checked In</Badge>;
-      case "CANCELLED": return <Badge variant="danger">Cancelled</Badge>;
-      default: return <Badge>{status}</Badge>;
+      case "CONFIRMED":
+        return <Badge variant="success">Confirmed</Badge>;
+      case "CHECKED_IN":
+        return <Badge variant="info">Checked In</Badge>;
+      case "CANCELLED":
+        return <Badge variant="danger">Cancelled</Badge>;
+      case "WAITLISTED":
+        return <Badge variant="warning">Waitlisted</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
     }
   };
 
@@ -92,17 +130,32 @@ export default function BookingsPage() {
     <div className="container py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">My Bookings</h1>
 
-      {error && <Alert variant="error" className="mb-4">{error}</Alert>}
-      {cancelSuccess && <Alert variant="success" className="mb-4">{cancelSuccess}</Alert>}
+      {error && (
+        <Alert variant="error" className="mb-4">
+          {error}
+        </Alert>
+      )}
+      {cancelSuccess && (
+        <Alert variant="success" className="mb-4">
+          {cancelSuccess}
+        </Alert>
+      )}
 
       {bookings.length === 0 ? (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+            />
           </svg>
           <h3 className="mt-4 text-lg font-medium text-gray-900">No bookings yet</h3>
           <p className="mt-2 text-gray-500">Browse events and book your first ticket!</p>
-          <Link href="/"><Button className="mt-4">Browse Events</Button></Link>
+          <Link href="/">
+            <Button className="mt-4">Browse Events</Button>
+          </Link>
         </div>
       ) : (
         <div className="space-y-4">
@@ -115,7 +168,12 @@ export default function BookingsPage() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                     </div>
                   )}
@@ -127,16 +185,32 @@ export default function BookingsPage() {
                     {statusBadge(booking.status)}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    {booking.event && formatDate(booking.event.date)} at {booking.event && formatTime(booking.event.time)}
+                    {booking.event && formatDate(booking.event.date)} at{" "}
+                    {booking.event && formatTime(booking.event.time)}
                   </p>
                   <p className="text-sm text-gray-500">{booking.event?.venue}</p>
                   {booking.seatTier && (
-                    <p className="text-sm text-sky-600 font-medium">{booking.seatTier.name} — {formatCurrency(booking.pricePaid)}</p>
+                    <p className="text-sm text-sky-600 font-medium">
+                      {booking.seatTier.name} — {formatCurrency(booking.pricePaid)}
+                    </p>
                   )}
                   {!booking.seatTier && booking.pricePaid > 0 && (
                     <p className="text-sm text-sky-600 font-medium">{formatCurrency(booking.pricePaid)}</p>
                   )}
                   <p className="text-xs text-gray-400 mt-1">Ticket: {booking.ticketCode.slice(0, 8).toUpperCase()}</p>
+                  {booking.status === "WAITLISTED" &&
+                    booking.event?.id &&
+                    waitlistPositionsByEventId[booking.event.id] && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-gray-500">Waitlist position</span>
+                        <Badge
+                          variant="warning"
+                          className="px-3 py-1 text-sm font-bold tracking-wide border border-yellow-300"
+                        >
+                          #{waitlistPositionsByEventId[booking.event.id]}
+                        </Badge>
+                      </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -145,14 +219,32 @@ export default function BookingsPage() {
                       <Link href={`/tickets/${booking.id}`}>
                         <Button size="sm">View Ticket</Button>
                       </Link>
-                      <Button size="sm" variant="danger" onClick={() => { setCancelId(booking.id); setCancelSuccess(""); }}>Cancel</Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => {
+                          setCancelId(booking.id);
+                          setCancelSuccess("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </>
+                  )}
+                  {booking.status === "WAITLISTED" && (
+                    <Link href={`/events/${booking.event?.id}`}>
+                      <Button size="sm" variant="secondary">
+                        View Event
+                      </Button>
+                    </Link>
                   )}
                   {booking.status === "CANCELLED" && booking.refundAmount > 0 && (
                     <span className="text-xs text-gray-500">Refund: {formatCurrency(booking.refundAmount)}</span>
                   )}
                   {booking.status === "CHECKED_IN" && (
-                    <Badge variant="success" className="px-4 py-2">Attended</Badge>
+                    <Badge variant="success" className="px-4 py-2">
+                      Attended
+                    </Badge>
                   )}
                 </div>
               </CardContent>
@@ -164,7 +256,9 @@ export default function BookingsPage() {
       <Modal isOpen={!!cancelId} onClose={() => setCancelId(null)} title="Cancel Booking">
         <div className="space-y-4">
           {isLoadingPreview ? (
-            <div className="flex justify-center py-4"><Spinner /></div>
+            <div className="flex justify-center py-4">
+              <Spinner />
+            </div>
           ) : refundPreview ? (
             <>
               <p className="text-gray-600">{refundPreview.message}</p>
@@ -193,8 +287,12 @@ export default function BookingsPage() {
             <p className="text-gray-600">Are you sure you want to cancel this booking? This action cannot be undone.</p>
           )}
           <div className="flex space-x-3">
-            <Button variant="secondary" className="flex-1" onClick={() => setCancelId(null)} disabled={isCancelling}>Keep Booking</Button>
-            <Button variant="danger" className="flex-1" onClick={handleCancel} isLoading={isCancelling}>Cancel Booking</Button>
+            <Button variant="secondary" className="flex-1" onClick={() => setCancelId(null)} disabled={isCancelling}>
+              Keep Booking
+            </Button>
+            <Button variant="danger" className="flex-1" onClick={handleCancel} isLoading={isCancelling}>
+              Cancel Booking
+            </Button>
           </div>
         </div>
       </Modal>

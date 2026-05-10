@@ -21,11 +21,7 @@ import { generateTicketCode, generateQRData } from "./qr.js";
  * @param recipientId - User ID of the new owner
  * @returns The newly created booking for the recipient
  */
-export async function transferBooking(
-  tx: any,
-  bookingId: string,
-  recipientId: string
-) {
+export async function transferBooking(tx: any, bookingId: string, recipientId: string) {
   // 1. Fetch the original booking with related data
   const booking = await tx.booking.findUnique({
     where: { id: bookingId },
@@ -43,48 +39,20 @@ export async function transferBooking(
     throw new Error("INVALID_STATUS:Only confirmed bookings can be transferred");
   }
 
-  // 2. Cancel the original booking
+  // 2. Mark the original booking as transferred
   // No refund for transfers — this is an ownership change, not a financial reversal
   await tx.booking.update({
     where: { id: booking.id },
     data: {
-      status: "CANCELLED",
+      status: "TRANSFERRED",
       refundAmount: 0,
-      cancelledAt: new Date(),
+      transferredAt: new Date(),
     },
   });
 
-  // 3. Adjust capacity counters (decrement for cancel, re-increment for new booking)
-  // This two-step approach ensures the capacity logic stays consistent with
-  // the rest of the booking system — cancel always decrements, create always increments.
-  await tx.event.update({
-    where: { id: booking.eventId },
-    data: { soldCount: { decrement: 1 } },
-  });
-
-  if (booking.seatTierId) {
-    await tx.seatTier.update({
-      where: { id: booking.seatTierId },
-      data: { soldCount: { decrement: 1 } },
-    });
-  }
-
-  // 4. Create new booking for recipient with fresh ticket credentials
+  // 3. Create new booking for recipient with fresh ticket credentials
   const ticketCode = generateTicketCode();
   const qrCodeData = generateQRData(ticketCode);
-
-  // Re-increment capacity
-  await tx.event.update({
-    where: { id: booking.eventId },
-    data: { soldCount: { increment: 1 } },
-  });
-
-  if (booking.seatTierId) {
-    await tx.seatTier.update({
-      where: { id: booking.seatTierId },
-      data: { soldCount: { increment: 1 } },
-    });
-  }
 
   const newBooking = await tx.booking.create({
     data: {

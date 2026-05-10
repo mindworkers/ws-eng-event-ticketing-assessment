@@ -8,15 +8,18 @@ import dashboardRoutes from "./routes/dashboard.js";
 import tierRoutes from "./routes/tiers.js";
 import promoCodeRoutes from "./routes/promoCodes.js";
 import waitlistRoutes from "./routes/waitlist.js";
+import transferRoutes from "./routes/transfers.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors({
-  origin: true, // Allow all origins — requests are proxied through Next.js in Codespaces
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: true, // Allow all origins — requests are proxied through Next.js in Codespaces
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Health check
@@ -30,6 +33,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/events", tierRoutes);
 app.use("/api/events", promoCodeRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/transfers", transferRoutes);
 app.use("/api/checkin", checkinRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/waitlist", waitlistRoutes);
